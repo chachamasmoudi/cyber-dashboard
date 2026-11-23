@@ -4,6 +4,7 @@ import cyber.server.detection.ForceBrute;
 import cyber.server.detection.MoteurDetection;
 import cyber.server.detection.PublicateurAlertes;
 import cyber.server.detection.PublicateurConsole;
+import cyber.server.detection.ScanPorts;
 import cyber.server.udp.RecepteurUDP;
 
 import java.util.List;
@@ -17,7 +18,8 @@ public class Serveur {
         PublicateurAlertes publicateur = new PublicateurConsole();
 
         MoteurDetection moteur = new MoteurDetection(
-                List.of(new ForceBrute(5, 30_000)),    // plus de 5 échecs en 30 s
+                List.of(new ForceBrute(5, 30_000),     // plus de 5 échecs en 30 s
+                        new ScanPorts(10, 10_000)),    // plus de 10 ports en 10 s
                 publicateur);
 
         Thread threadUdp = new Thread(new RecepteurUDP(PORT_UDP, moteur), "recepteur-udp");

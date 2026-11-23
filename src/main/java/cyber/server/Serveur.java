@@ -6,14 +6,19 @@ import cyber.server.detection.MoteurDetection;
 import cyber.server.detection.PublicateurAlertes;
 import cyber.server.detection.PublicateurConsole;
 import cyber.server.detection.ScanPorts;
+import cyber.server.jms.PublicateurJMS;
 import cyber.server.rmi.ServiceAdminImpl;
 import cyber.server.udp.RecepteurUDP;
 
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import java.util.Arrays;
 import java.util.List;
 
-/** Point d'entrée du serveur central (étape 3 : UDP + détection + RMI). */
+/**
+ * Point d'entrée du serveur central (étape 4 : UDP + détection + RMI + JMS).
+ * Option : --sans-jms  → affiche les alertes en console (pour tester sans ActiveMQ).
+ */
 public class Serveur {
 
     public static final int PORT_UDP = 9999;
@@ -21,7 +26,9 @@ public class Serveur {
     public static final String NOM_RMI = "ServiceAdmin";
 
     public static void main(String[] args) throws Exception {
-        PublicateurAlertes publicateur = new PublicateurConsole();
+        boolean sansJms = Arrays.asList(args).contains("--sans-jms");
+
+        PublicateurAlertes publicateur = sansJms ? new PublicateurConsole() : new PublicateurJMS();
 
         MoteurDetection moteur = new MoteurDetection(
                 List.of(new ForceBrute(5, 30_000),     // plus de 5 échecs en 30 s

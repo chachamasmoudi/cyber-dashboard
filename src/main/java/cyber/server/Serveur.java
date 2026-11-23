@@ -1,21 +1,26 @@
 package cyber.server;
 
 import cyber.server.detection.ForceBrute;
+import cyber.server.detection.HorsHoraires;
 import cyber.server.detection.MoteurDetection;
 import cyber.server.detection.PublicateurAlertes;
 import cyber.server.detection.PublicateurConsole;
 import cyber.server.detection.ScanPorts;
+import cyber.server.rmi.ServiceAdminImpl;
 import cyber.server.udp.RecepteurUDP;
-import cyber.server.detection.HorsHoraires;
 
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.util.List;
 
-/** Point d'entrée du serveur central (étape 2 : UDP + détection). */
+/** Point d'entrée du serveur central (étape 3 : UDP + détection + RMI). */
 public class Serveur {
 
     public static final int PORT_UDP = 9999;
+    public static final int PORT_RMI = 1099;
+    public static final String NOM_RMI = "ServiceAdmin";
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         PublicateurAlertes publicateur = new PublicateurConsole();
 
         MoteurDetection moteur = new MoteurDetection(
@@ -24,8 +29,15 @@ public class Serveur {
                         new HorsHoraires()),
                 publicateur);
 
+        // 1) Réception des logs UDP dans un thread dédié
         Thread threadUdp = new Thread(new RecepteurUDP(PORT_UDP, moteur), "recepteur-udp");
         threadUdp.start();
+
+        // 2) Service RMI pour l'administration
+        Registry registre = LocateRegistry.createRegistry(PORT_RMI);
+        registre.rebind(NOM_RMI, new ServiceAdminImpl(moteur));
+        System.out.println("[RMI] Service '" + NOM_RMI + "' publié sur le port " + PORT_RMI);
+
         System.out.println("[Serveur] Prêt. Ctrl+C pour arrêter.");
     }
 }

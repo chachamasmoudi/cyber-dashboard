@@ -1,14 +1,26 @@
 package cyber.server;
 
+import cyber.server.detection.ForceBrute;
+import cyber.server.detection.MoteurDetection;
+import cyber.server.detection.PublicateurAlertes;
+import cyber.server.detection.PublicateurConsole;
 import cyber.server.udp.RecepteurUDP;
 
-/** Point d'entrée du serveur central (version de l'étape 1 : UDP seulement). */
+import java.util.List;
+
+/** Point d'entrée du serveur central (étape 2 : UDP + détection). */
 public class Serveur {
 
     public static final int PORT_UDP = 9999;
 
     public static void main(String[] args) {
-        Thread threadUdp = new Thread(new RecepteurUDP(PORT_UDP), "recepteur-udp");
+        PublicateurAlertes publicateur = new PublicateurConsole();
+
+        MoteurDetection moteur = new MoteurDetection(
+                List.of(new ForceBrute(5, 30_000)),    // plus de 5 échecs en 30 s
+                publicateur);
+
+        Thread threadUdp = new Thread(new RecepteurUDP(PORT_UDP, moteur), "recepteur-udp");
         threadUdp.start();
         System.out.println("[Serveur] Prêt. Ctrl+C pour arrêter.");
     }
